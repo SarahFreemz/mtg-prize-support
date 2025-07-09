@@ -1,43 +1,49 @@
 # MTG Prize Support App
 
-This project is a Google Apps Script application designed to assist in calculating prize support for Magic: The Gathering events. It processes entry fees and prize packs to determine payouts and store profits.
+This project is a Node.js application designed to assist in calculating prize support for Magic: The Gathering events. It processes entry fees and prize packs to determine payouts and store profits.
 
 ## Project Structure
 
-- **src/Code.js**: Contains the main logic for processing prize support forms and calculating payouts.
-- **.clasp.json**: Configuration file for clasp, containing settings for deploying Google Apps Script projects.
-- **Dockerfile**: Defines the environment for the application, including base image and dependencies.
-- **package.json**: Configuration file for npm, listing dependencies and scripts for the project.
-- **README.md**: Documentation for the project, including setup instructions and usage guidelines.
+- **src/server.js**: Main Express server handling form submissions and prize calculations.
+- **src/public/PrizeSupportForm.html**: The HTML form for user input.
+- **Dockerfile**: Defines the Docker environment for deployment.
+- **package.json**: Lists dependencies and npm scripts.
+- **README.md**: Project documentation.
 
 ## Setup Instructions
 
 1. **Clone the repository**:
-   ```
+   ```sh
    git clone <repository-url>
    cd mtg-prize-support-app
    ```
 
 2. **Install dependencies**:
-   ```
+   ```sh
    npm install
    ```
 
-3. **Configure clasp**:
-   Ensure you have the `.clasp.json` file set up with your Google Apps Script project details.
-
-4. **Run the application**:
-   Use the following command to start the application in a Docker container:
+3. **Run the application locally**:
+   ```sh
+   npm start
    ```
+   Then open [http://localhost:8080](http://localhost:8080) in your browser.
+
+4. **Run with Docker**:
+   ```sh
    docker build -t mtg-prize-support-app .
-   docker run mtg-prize-support-app
+   docker run -p 8080:8080 mtg-prize-support-app
    ```
 
-## Usage Guidelines
+## Usage
 
-- To use the prize support calculator, access the deployed Google Apps Script web app.
-- Input the number of players, entry fee, and available prize packs to calculate the payouts and total number of prize packs to be distributed.
+- Access the app in your browser.
+- Enter the number of players, entry fee, and prize packs to calculate payouts and prize distribution.
+
+## Deployment
+
+You can deploy this app to any platform that supports Docker, such as Fly.io or other cloud providers.
 
 ## Contributing
 
-Contributions are welcome! Please submit a pull request or open an issue for any enhancements or bug fixes.
+Contributions are welcome! Please open an issue or submit a pull request for enhancements or bug fixes.

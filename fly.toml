@@ -3,10 +3,13 @@
 # See https://fly.io/docs/reference/configuration/ for information about how to use this file.
 #
 
-app = 'mtg-prize-support'
-primary_region = 'iad'
+app = "mtg-prize-support"
 
 [build]
+  dockerfile = "Dockerfile"
+
+[env]
+  PORT = "8080"
 
 [http_service]
   internal_port = 8080
