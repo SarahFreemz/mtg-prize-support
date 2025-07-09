@@ -1,0 +1,22 @@
+{
+  "name": "mtg-prize-support-app",
+  "version": "1.0.0",
+  "description": "A Google Apps Script application for calculating prize support for MTG events.",
+  "main": "src/Code.js",
+  "scripts": {
+    "start": "clasp run processPrizeSupportForm",
+    "deploy": "clasp deploy",
+    "push": "clasp push",
+    "pull": "clasp pull"
+  },
+  "dependencies": {
+  },
+  "devDependencies": {},
+  "keywords": [
+    "google-apps-script",
+    "mtg",
+    "prize-support"
+  ],
+  "author": "Your Name",
+  "license": "MIT"
+}

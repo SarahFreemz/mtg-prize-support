@@ -1,0 +1,6 @@
+{
+  "scriptId": "YOUR_SCRIPT_ID",
+  "projectId": "YOUR_PROJECT_ID",
+  "rootDir": "src",
+  "fileExtension": "js"
+}
