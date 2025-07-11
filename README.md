@@ -1,6 +1,8 @@
 # MTG Prize Support Calculator
 
-A web application for calculating Magic: The Gathering tournament prize distributions based on entry fees, player counts, and pack prices.
+A web application for calculating Magic: The Gathering (or other TCG) tournament prize distributions based on entry fees, player counts, and pack prices.
+
+Currently hosted at https://mtg-prize-support.fly.dev/
 
 ## Overview
 
