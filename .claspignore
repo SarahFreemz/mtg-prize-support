@@ -1,8 +1,0 @@
-node_modules/
-.git/
-.vscode/
-*.md
-*.json
-*.log
-.DS_Store
-Thumbs.db

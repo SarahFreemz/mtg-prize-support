@@ -1,16 +1,12 @@
-FROM node:14
+FROM node:18-alpine
 
 WORKDIR /app
 
-COPY package.json ./
-COPY package-lock.json ./
+COPY package*.json ./
+RUN npm install --only=production
 
-RUN npm install
-
-COPY src ./src
-
-RUN npm install -g @google/clasp
+COPY src/ ./src/
 
 EXPOSE 8080
 
-CMD ["clasp", "run"]
+CMD ["npm", "start"]
