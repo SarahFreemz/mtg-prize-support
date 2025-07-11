@@ -17,21 +17,38 @@ app.get('/', (req, res) => {
 
 // Handle form submissions
 app.post('/process', (req, res) => {
-  const { numPlayers, entryFee, withTO, packs } = req.body;
+  const { numPlayers, entryFee, withTO, packs, config } = req.body;
   let results = [];
-  let totalEntryFeeMinusTax = numPlayers * entryFee / 1.06;
+  
+  // Default configuration values
+  const defaultConfig = {
+    storeProfitRate: 0.20,     // 20%
+    toPayoutRate: 0.20,        // 20%
+    storeCostFactor: 0.60,     // 60%
+    salesTaxRate: 0.06         // 6%
+  };
+  
+  // Use provided config or defaults
+  const settings = { ...defaultConfig, ...config };
+  
+  // Calculate total entry fee minus tax
+  const salesTaxMultiplier = 1 + settings.salesTaxRate;
+  let totalEntryFeeMinusTax = numPlayers * entryFee / salesTaxMultiplier;
 
-  // Store profit is always 20% of the pool
-  let storeProfit = (totalEntryFeeMinusTax * 0.2).toFixed(2);
+  // Store profit calculation
+  let storeProfit = (totalEntryFeeMinusTax * settings.storeProfitRate).toFixed(2);
 
-  // TO payout is also always 20% of the pool (if withTO is true)
+  // TO payout calculation
   let toPayout = 0;
   if (withTO) {
-    toPayout = (totalEntryFeeMinusTax * 0.2).toFixed(2);
+    toPayout = (totalEntryFeeMinusTax * settings.toPayoutRate).toFixed(2);
   }
 
   // Remove store profit and TO payout from prize pool
   let prizePool = totalEntryFeeMinusTax - storeProfit - (withTO ? toPayout : 0);
+  prizePool = prizePool.toFixed(2);
+
+  console.log('Received packs:', packs);
 
   if (!packs || packs.length === 0) {
     results.push('No prize packs entered.');
@@ -40,15 +57,17 @@ app.post('/process', (req, res) => {
     if (withTO) {
       results.push(`TO Payout: $${toPayout}`);
     }
+    
     // For each pack, calculate how many can be distributed
     packs.forEach((pack, i) => {
+      console.log(`Pack ${i}:`, pack, 'Name:', pack.name, 'Price:', pack.price);
       const packName = pack && pack.name ? pack.name : 'Unnamed Pack';
       const price = parseFloat(pack.price);
       if (isNaN(price) || price <= 0) {
         results.push(`${packName}: Invalid price`);
         return;
       }
-      const storeCostPerPack = price * 0.6;
+      const storeCostPerPack = price * settings.storeCostFactor;
       const numPacks = Math.ceil(prizePool / storeCostPerPack);
       results.push(`${packName}: ${numPacks} pack(s)`);
     });

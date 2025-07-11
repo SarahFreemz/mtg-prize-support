@@ -8,12 +8,78 @@
             rel="stylesheet" />
     </head>
     <body class="container-fluid bg-light">
-        <div class="container px-2 px-sm-4 py-4" style="max-width: 500px; margin-top: 40px;">
+        <div class="container px-2 px-sm-4 py-4" style="max-width: 600px; margin-top: 40px;">
             <h3 class="mb-3 text-center">Prize Support Calculator</h3>
             <p class="text-center">
                 Enter the names and prices of the prize packs available. The total number
                 of packs available for prizing will be calculated automatically.
             </p>
+            
+            <!-- Configuration Section -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <button class="btn btn-link p-0" type="button" data-bs-toggle="collapse" data-bs-target="#configSection">
+                        <strong>Configuration Settings</strong> (Click to expand)
+                    </button>
+                </div>
+                <div class="collapse" id="configSection">
+                    <div class="card-body">
+                        <div class="row g-2 mb-3">
+                            <div class="col-6 col-md-6">
+                                <label for="storeProfitRate" class="form-label">Store Profit Rate (%)</label>
+                                <input
+                                    type="number"
+                                    id="storeProfitRate"
+                                    name="storeProfitRate"
+                                    class="form-control"
+                                    value="20"
+                                    min="0"
+                                    max="100"
+                                    step="any" />
+                            </div>
+                            <div class="col-6 col-md-6">
+                                <label for="toPayout" class="form-label">TO Payout Rate (%)</label>
+                                <input
+                                    type="number"
+                                    id="toPayoutRate"
+                                    name="toPayoutRate"
+                                    class="form-control"
+                                    value="20"
+                                    min="0"
+                                    max="100"
+                                    step="any" />
+                            </div>
+                        </div>
+                        <div class="row g-2 mb-3">
+                            <div class="col-6 col-md-6">
+                                <label for="storeCostFactor" class="form-label">Store Cost Factor (%)</label>
+                                <input
+                                    type="number"
+                                    id="storeCostFactor"
+                                    name="storeCostFactor"
+                                    class="form-control"
+                                    value="60"
+                                    min="0"
+                                    max="100"
+                                    step="any" />
+                            </div>
+                            <div class="col-6 col-md-6">
+                                <label for="salesTaxRate" class="form-label">Sales Tax Rate (%)</label>
+                                <input
+                                    type="number"
+                                    id="salesTaxRate"
+                                    name="salesTaxRate"
+                                    class="form-control"
+                                    value="6"
+                                    min="0"
+                                    max="100"
+                                    step="any" />
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <form id="prizeForm">
                 <div class="row g-2 mb-3">
                     <div class="col-6 col-md-6">
@@ -109,7 +175,6 @@
 
             function removeLastEntry() {
                 var entries = document.getElementById('entries');
-                // Only remove if there is more than one row
                 if (entries.children.length > 1) {
                     entries.removeChild(entries.lastElementChild);
                 }
@@ -128,10 +193,19 @@
                     .querySelectorAll('input[name="price"]')
                     .forEach((input) => prices.push(input.value));
 
+                // Get configuration values
+                const config = {
+                    storeProfitRate: parseFloat(document.getElementById('storeProfitRate').value) / 100,
+                    toPayoutRate: parseFloat(document.getElementById('toPayoutRate').value) / 100,
+                    storeCostFactor: parseFloat(document.getElementById('storeCostFactor').value) / 100,
+                    salesTaxRate: parseFloat(document.getElementById('salesTaxRate').value) / 100
+                };
+
                 const data = {
                     numPlayers: formData.get('numPlayers'),
                     entryFee: formData.get('entryFee'),
                     withTO: formData.get('withTO') === 'on',
+                    config: config,
                     packs: packNames.map((name, i) => ({
                         name,
                         price: prices[i],
