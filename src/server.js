@@ -3,77 +3,177 @@ const path = require('path');
 const app = express();
 const PORT = process.env.PORT || 8080;
 
-// Middleware to parse JSON and URL-encoded data
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
-
-// Serve static files (like your HTML form) from the public directory
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Serve the main HTML form
+// Serve home / index
 app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
+app.get('/prize', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'PrizeSupportForm.html'));
 });
+app.get('/to-payout', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'TOPayoutForm.html'));
+});
+app.get('/entry-fee', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'EntryFeeForm.html'));
+});
 
-// Handle form submissions
+// /process endpoint accepts a 'mode' field in body to choose behavior
 app.post('/process', (req, res) => {
-  const { numPlayers, entryFee, withTO, packs, config } = req.body;
-  let results = [];
-  
-  // Default configuration values
-  const defaultConfig = {
-    storeProfitRate: 0.20,     // 20%
-    toPayoutRate: 0.20,        // 20%
-    storeCostFactor: 0.60,     // 60%
-    salesTaxRate: 0.06         // 6%
-  };
-  
-  // Use provided config or defaults
-  const settings = { ...defaultConfig, ...config };
-  
-  // Calculate total entry fee minus tax
-  const salesTaxMultiplier = 1 + settings.salesTaxRate;
-  let totalEntryFeeMinusTax = numPlayers * entryFee / salesTaxMultiplier;
+  try {
+    const {
+      numPlayers,
+      entryFee,
+      withTO,
+      packs,
+      config,
+      mode,
+      eventPacks,
+      prizePacks,
+      additionalCosts
+    } = req.body;
 
-  // Store profit calculation
-  let storeProfit = (totalEntryFeeMinusTax * settings.storeProfitRate).toFixed(2);
-
-  // TO payout calculation
-  let toPayout = 0;
-  if (withTO) {
-    toPayout = (totalEntryFeeMinusTax * settings.toPayoutRate).toFixed(2);
-  }
-
-  // Remove store profit and TO payout from prize pool
-  let prizePool = totalEntryFeeMinusTax - storeProfit - (withTO ? toPayout : 0);
-  prizePool = prizePool.toFixed(2);
-
-  console.log('Received packs:', packs);
-
-  if (!packs || packs.length === 0) {
-    results.push('No prize packs entered.');
-  } else {
-    results.push('Prize Distribution');
-    if (withTO) {
-      results.push(`TO Payout: $${toPayout}`);
+    // Basic input validation
+    const players = parseInt(numPlayers, 10);
+    const fee = parseFloat(entryFee);
+    if (!players || isNaN(players) || players < 1) {
+      return res.status(400).json({ error: 'Invalid number of players' });
     }
-    
-    // For each pack, calculate how many can be distributed
-    packs.forEach((pack, i) => {
-      console.log(`Pack ${i}:`, pack, 'Name:', pack.name, 'Price:', pack.price);
-      const packName = pack && pack.name ? pack.name : 'Unnamed Pack';
-      const price = parseFloat(pack.price);
-      if (isNaN(price) || price <= 0) {
-        results.push(`${packName}: Invalid price`);
-        return;
-      }
-      const storeCostPerPack = price * settings.storeCostFactor;
-      const numPacks = Math.ceil(prizePool / storeCostPerPack);
-      results.push(`${packName}: ${numPacks} pack(s)`);
-    });
-  }
+    if (isNaN(fee) || fee < 0) {
+      return res.status(400).json({ error: 'Invalid entry fee' });
+    }
 
-  res.json({ result: results.join('\n') });
+    // Default configuration values
+    const baseDefaults = {
+      storeProfitRate: 0.20, // 20%
+      toPayoutRate: 0.20,    // 20%
+      storeCostFactor: 0.60, // 60%
+      salesTaxRate: 0.06     // 6%
+    };
+
+    // Per-mode defaults (tweak as needed)
+    const modeDefaults = {
+      prize: { ...baseDefaults },
+      'to-payout': { ...baseDefaults },
+      'entry-fee': { ...baseDefaults }
+    };
+
+    const selectedMode = mode && modeDefaults[mode] ? mode : 'prize';
+    const defaults = modeDefaults[selectedMode];
+
+    // Compose final settings (explicit config overrides defaults if provided)
+    const settings = { ...defaults, ...(config || {}) };
+
+    // Parse additionalCosts (optional)
+    const addCosts = parseFloat(additionalCosts) || 0;
+
+    // Calculate total entry fee minus sales tax
+    const salesTaxMultiplier = 1 + settings.salesTaxRate;
+    const totalEntryFee = players * fee;
+    const totalEntryFeeMinusTax = totalEntryFee / salesTaxMultiplier;
+
+    // Compute store profit and TO payout (both are percentages of the pre-allocation pool)
+    const storeProfit = totalEntryFeeMinusTax * settings.storeProfitRate;
+    const toPayout = withTO ? totalEntryFeeMinusTax * settings.toPayoutRate : 0;
+
+    // Compute event pack costs: qtyPerPlayer * players * (price * storeCostFactor)
+    let eventPackCost = 0;
+    if (Array.isArray(eventPacks) && eventPacks.length > 0) {
+      eventPackCost = eventPacks.reduce((sum, p) => {
+        const price = parseFloat(p.price) || 0;
+        const qtyPerPlayer = parseInt(p.qtyPerPlayer || 0, 10) || 0;
+        const units = qtyPerPlayer * players;
+        const storeCost = price * settings.storeCostFactor;
+        return sum + units * storeCost;
+      }, 0);
+    }
+
+    // Compute prize pack costs: totalQty * (price * storeCostFactor)
+    let prizePackCost = 0;
+    const prizeList = Array.isArray(prizePacks) && prizePacks.length > 0 ? prizePacks : (Array.isArray(packs) ? packs : []);
+    if (prizeList.length > 0) {
+      prizePackCost = prizeList.reduce((sum, p) => {
+        const price = parseFloat(p.price) || 0;
+        // prize pack may provide totalQty or be used as a 'price' only list; support both
+        const totalQty = parseInt(p.totalQty || p.qty || 0, 10) || 0;
+        const storeCost = price * settings.storeCostFactor;
+        return sum + totalQty * storeCost;
+      }, 0);
+    }
+
+    // Prize pool after subtracting storeProfit, toPayout, event & prize pack costs and additional costs
+    let prizePool = totalEntryFeeMinusTax - storeProfit - toPayout - eventPackCost - prizePackCost - addCosts;
+
+    // Build results
+    const results = [];
+    results.push(`Mode: ${selectedMode}`);
+    results.push(`Total revenue (before tax): $${totalEntryFee.toFixed(2)}`);
+    results.push(`Sales tax rate: ${(settings.salesTaxRate * 100).toFixed(2)}%`);
+    results.push(`Revenue after tax: $${totalEntryFeeMinusTax.toFixed(2)}`);
+    results.push(`Store profit (${(settings.storeProfitRate * 100).toFixed(2)}%): $${storeProfit.toFixed(2)}`);
+    if (withTO) results.push(`TO payout (${(settings.toPayoutRate * 100).toFixed(2)}%): $${toPayout.toFixed(2)}`);
+    results.push(`Event packs total store cost: $${eventPackCost.toFixed(2)}`);
+    results.push(`Prize packs total store cost: $${prizePackCost.toFixed(2)}`);
+    results.push(`Additional costs: $${addCosts.toFixed(2)}`);
+    results.push(`Remaining prize pool: $${prizePool.toFixed(2)}`);
+
+    // If prize packs were provided with totalQty, list them with cost and quantity
+    if (prizeList.length > 0) {
+      results.push('');
+      results.push('Prize packs breakdown:');
+      prizeList.forEach((p, i) => {
+        const name = p.name || `Pack ${i+1}`;
+        const price = parseFloat(p.price) || 0;
+        const totalQty = parseInt(p.totalQty || p.qty || 0, 10) || 0;
+        const storeCost = price * settings.storeCostFactor;
+        const totalCost = (storeCost * totalQty);
+        results.push(`${name}: qty ${totalQty}, store cost per pack $${storeCost.toFixed(2)}, total $${totalCost.toFixed(2)}`);
+      });
+    }
+
+    // If prizePool is negative, warn user
+    if (prizePool < 0) {
+      results.push('');
+      results.push('Warning: remaining prize pool is negative. Revenue does not cover the configured costs/allocations.');
+    }
+
+    // Additionally: compute for each prize pack how many more packs could be purchased with the remaining prizePool (if positive)
+    if (prizePool > 0 && prizeList.length > 0) {
+      results.push('');
+      results.push('With remaining prize pool you could additionally purchase:');
+      prizeList.forEach((p, i) => {
+        const name = p.name || `Pack ${i+1}`;
+        const price = parseFloat(p.price) || 0;
+        const storeCost = price * settings.storeCostFactor;
+        const additionalUnits = Math.floor(prizePool / storeCost);
+        results.push(`${name}: ${additionalUnits} additional pack(s)`);
+      });
+    }
+
+    // Return the settings and result summary
+    res.json({
+      mode: selectedMode,
+      settings,
+      totals: {
+        totalEntryFee,
+        totalEntryFeeMinusTax,
+        storeProfit,
+        toPayout,
+        eventPackCost,
+        prizePackCost,
+        additionalCosts: addCosts,
+        prizePool
+      },
+      result: results.join('\n')
+    });
+
+  } catch (err) {
+    console.error('Processing error:', err);
+    res.status(500).json({ error: 'Calculation failed', message: err.message });
+  }
 });
 
 app.listen(PORT, () => {

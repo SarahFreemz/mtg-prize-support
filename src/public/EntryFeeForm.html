@@ -13,10 +13,10 @@
         <div class="container px-2 px-sm-4 py-4" style="max-width: 600px; margin-top: 40px;">
             <h3 class="mb-3 text-center">Prize Support Calculator</h3>
             <div class="text-center mb-3">
-  <a href="/" class="btn btn-sm btn-outline-secondary">
-    &larr; Home
-  </a>
-</div>
+                <a href="/" class="btn btn-sm btn-outline-secondary">
+                    &larr; Home
+                </a>
+            </div>
             <p class="text-center text-muted">
                 Enter the names and prices of the prize packs available. The total number
                 of packs available for prizing will be calculated automatically.
@@ -218,7 +218,7 @@
                     withTO: formData.get('withTO') === 'on',
                     config: config,
                     packs: packNames.map((name, i) => ({ name, price: prices[i] })),
-                    mode: 'prize' // set per page: 'prize' | 'to-payout' | 'entry-fee'
+                    mode: 'entry-fee' // set per page: 'prize' | 'to-payout' | 'entry-fee'
                 };
 
                 try {
