@@ -1,0 +1,355 @@
+﻿<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>MTG Prize Support — TO Payout</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+    <script>
+      document.addEventListener('DOMContentLoaded', () => {
+        // Utility to escape HTML when injecting server strings into the page
+        function escapeHtml(str) {
+          return String(str || '')
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#39;');
+        }
+
+        // Build a plain-text receipt from the server response
+        function buildReceiptText(result) {
+          if (!result || !result.totals) return '';
+          const lines = [];
+          lines.push('MTG Prize Support');
+          lines.push('------------------------------');
+          lines.push(`Mode: ${result.mode || ''}`);
+          if (typeof result.totals.totalEntryFee === 'number') lines.push(`Total revenue: $${result.totals.totalEntryFee.toFixed(2)}`);
+          if (typeof result.totals.totalEntryFeeMinusTax === 'number') lines.push(`Revenue after tax: $${result.totals.totalEntryFeeMinusTax.toFixed(2)}`);
+          if (typeof result.totals.storeProfit === 'number') lines.push(`Store profit: $${result.totals.storeProfit.toFixed(2)}`);
+          if (typeof result.totals.toPayout === 'number' && result.totals.toPayout > 0) lines.push(`TO payout: $${result.totals.toPayout.toFixed(2)}`);
+          if (typeof result.totals.additionalCosts === 'number') lines.push(`Additional costs: $${result.totals.additionalCosts.toFixed(2)}`);
+          lines.push('');
+          if (typeof result.totals.prizePool === 'number') lines.push(`Remaining prize pool: $${result.totals.prizePool.toFixed(2)}`);
+          lines.push('');
+          if (Array.isArray(result.totals.allocatablePacks) && result.totals.allocatablePacks.length > 0) {
+            lines.push('Packs purchasable:');
+            result.totals.allocatablePacks.forEach(p => {
+              lines.push(`${p.name}  x ${p.purchasable}`);
+            });
+          }
+          lines.push('');
+          lines.push('Thank you');
+          return lines.join('\n');
+        }
+
+        // Event pack functions
+        function addEventEntry() {
+          const div = document.createElement('div');
+          div.className = 'event-entry-row row mb-2 g-1 align-items-center';
+          div.innerHTML =
+            '<div class="col-6 col-md-6">' +
+              '<label class="form-label visually-hidden">Pack Name</label>' +
+              '<input type="text" name="eventPackName" class="form-control" placeholder="Name" required />' +
+            '</div>' +
+            '<div class="col-3 col-md-3">' +
+              '<label class="form-label visually-hidden">Price/Pack</label>' +
+              '<input type="number" name="eventPrice" class="form-control" placeholder="Price" step="any" required />' +
+            '</div>' +
+            '<div class="col-3 col-md-3">' +
+              '<label class="form-label visually-hidden">Qty/Player</label>' +
+              '<input type="number" name="eventQtyPerPlayer" class="form-control" placeholder="Qty/player" min="0" step="1" value="0" required />' +
+            '</div>';
+          document.getElementById('eventEntries').appendChild(div);
+        }
+
+        function removeLastEventEntry() {
+          const entries = document.getElementById('eventEntries');
+          if (entries.children.length > 1) entries.removeChild(entries.lastElementChild);
+        }
+
+        // Prize pack functions
+        function addPrizeEntry() {
+          const div = document.createElement('div');
+          div.className = 'prize-entry-row row mb-2 g-1 align-items-center';
+          div.innerHTML =
+            '<div class="col-6 col-md-6">' +
+              '<label class="form-label visually-hidden">Pack Name</label>' +
+              '<input type="text" name="prizePackName" class="form-control" placeholder="Name" required />' +
+            '</div>' +
+            '<div class="col-3 col-md-3">' +
+              '<label class="form-label visually-hidden">Price/Pack</label>' +
+              '<input type="number" name="prizePrice" class="form-control" placeholder="Price" step="any" required />' +
+            '</div>' +
+            '<div class="col-3 col-md-3">' +
+              '<label class="form-label visually-hidden">Total Qty</label>' +
+              '<input type="number" name="prizeTotalQty" class="form-control" placeholder="Total qty" min="0" step="1" value="0" required />' +
+            '</div>';
+          document.getElementById('prizeEntries').appendChild(div);
+        }
+
+        function removeLastPrizeEntry() {
+          const entries = document.getElementById('prizeEntries');
+          if (entries.children.length > 1) entries.removeChild(entries.lastElementChild);
+        }
+
+        // Expose helpers used by inline buttons
+        window.addEventEntry = addEventEntry;
+        window.removeLastEventEntry = removeLastEventEntry;
+        window.addPrizeEntry = addPrizeEntry;
+        window.removeLastPrizeEntry = removeLastPrizeEntry;
+
+        // Submit handler
+        const prizeForm = document.getElementById('prizeForm');
+        if (prizeForm) {
+          prizeForm.onsubmit = async function (e) {
+            e.preventDefault();
+
+            // Collect event packs
+            const eventNames = Array.from(document.querySelectorAll('input[name="eventPackName"]')).map(i => i.value);
+            const eventPrices = Array.from(document.querySelectorAll('input[name="eventPrice"]')).map(i => i.value);
+            const eventQtys = Array.from(document.querySelectorAll('input[name="eventQtyPerPlayer"]')).map(i => i.value);
+
+            const eventPacks = eventNames.map((name, idx) => ({
+              name,
+              price: eventPrices[idx],
+              qtyPerPlayer: parseInt(eventQtys[idx], 10) || 0
+            }));
+
+            // Collect prize packs
+            const prizeNames = Array.from(document.querySelectorAll('input[name="prizePackName"]')).map(i => i.value);
+            const prizePrices = Array.from(document.querySelectorAll('input[name="prizePrice"]')).map(i => i.value);
+            const prizeQtys = Array.from(document.querySelectorAll('input[name="prizeTotalQty"]')).map(i => i.value);
+
+            const prizePacks = prizeNames.map((name, idx) => ({
+              name,
+              price: prizePrices[idx],
+              totalQty: parseInt(prizeQtys[idx], 10) || 0
+            }));
+
+            // Config values
+            const config = {
+              storeProfitRate: parseFloat(document.getElementById('storeProfitRate').value) / 100,
+              toPayoutRate: parseFloat(document.getElementById('toPayoutRate').value) / 100,
+              storeCostFactor: parseFloat(document.getElementById('storeCostFactor').value) / 100,
+              salesTaxRate: parseFloat(document.getElementById('salesTaxRate').value) / 100
+            };
+
+            const formData = new FormData(this);
+
+            const data = {
+              numPlayers: parseInt(formData.get('numPlayers')),
+              entryFee: parseFloat(formData.get('entryFee')),
+              withTO: false,
+              config,
+              eventPacks,
+              prizePacks,
+              additionalCosts: parseFloat(formData.get('additionalCosts')) || 0,
+              // include prizePacks as 'packs' for backward compatibility
+              packs: prizePacks,
+              mode: 'to-payout'
+            };
+
+            try {
+              const response = await fetch('/process', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data),
+              });
+
+              const result = await response.json();
+
+              // Render structured result and prepare receipt
+              let out = '<div class="alert alert-success">';
+              if (result.totals && typeof result.totals.prizePool === 'number') {
+                out += `<div><strong>Remaining prize pool:</strong> $${result.totals.prizePool.toFixed(2)}</div>`;
+              }
+              if (result.totals && Array.isArray(result.totals.allocatablePacks) && result.totals.allocatablePacks.length > 0) {
+                out += '<div class="mt-2"><small class="text-muted">Packs purchasable (whole packs):</small>';
+                out += '<table class="table table-sm table-striped mt-2"><thead><tr><th>Pack</th><th>Purchasable</th></tr></thead><tbody>';
+                result.totals.allocatablePacks.forEach(p => {
+                  out += `<tr><td>${escapeHtml(p.name)}</td><td>${p.purchasable}</td></tr>`;
+                });
+                out += '</tbody></table></div>';
+              }
+              if (result.result) {
+                out += `<details class="mt-2"><summary>Detailed summary</summary><pre style="white-space:pre-wrap;">${escapeHtml(result.result)}</pre></details>`;
+              }
+              out += '</div>';
+              document.getElementById('result').innerHTML = out;
+
+              // Prepare receipt text and toggle print button
+              window.__lastReceiptText = buildReceiptText(result);
+              const prBtn = document.getElementById('printReceiptBtn');
+              if (window.__lastReceiptText && prBtn) {
+                prBtn.style.display = 'inline-block';
+              } else if (prBtn) {
+                prBtn.style.display = 'none';
+              }
+            } catch (error) {
+              document.getElementById('result').innerHTML = `<div class="alert alert-danger">Error: ${escapeHtml(error.message)}</div>`;
+            }
+          };
+        }
+
+        // Print button handler
+        const prBtn = document.getElementById('printReceiptBtn');
+        if (prBtn) {
+          prBtn.addEventListener('click', function () {
+            const text = window.__lastReceiptText || '';
+            const w = window.open('', 'receipt', 'width=320,height=600');
+            if (!w) return alert('Popup blocked — allow popups for this site to print receipts.');
+            const html = `<!doctype html><html><head><title>Receipt</title><meta charset="utf-8"><style>body{font-family:monospace;white-space:pre-wrap;padding:8px} .receipt{width:280px;}</style></head><body><div class="receipt"><pre>${escapeHtml(text)}</pre></div><script>window.onload=function(){window.print();setTimeout(()=>window.close(),200);}</script></body></html>`;
+            w.document.open();
+            w.document.write(html);
+            w.document.close();
+          });
+        }
+      });
+    </script>
+            '<input type="number" name="eventPrice" class="form-control" placeholder="Price" step="any" required>' +
+          '</div>' +
+          '<div class="col-3 col-md-3">' +
+            '<label class="form-label visually-hidden">Qty/Player</label>' +
+            '<input type="number" name="eventQtyPerPlayer" class="form-control" placeholder="Qty/player" min="0" step="1" value="0" required>' +
+          '</div>';
+        document.getElementById('eventEntries').appendChild(div);
+      }
+
+      function removeLastEventEntry() {
+        const entries = document.getElementById('eventEntries');
+        if (entries.children.length > 1) entries.removeChild(entries.lastElementChild);
+      }
+
+      // Prize pack functions
+      function addPrizeEntry() {
+        const div = document.createElement('div');
+        div.className = 'prize-entry-row row mb-2 g-1 align-items-center';
+        div.innerHTML =
+          '<div class="col-6 col-md-6">' +
+            '<label class="form-label visually-hidden">Pack Name</label>' +
+            '<input type="text" name="prizePackName" class="form-control" placeholder="Name" required>' +
+          '</div>' +
+          '<div class="col-3 col-md-3">' +
+            '<label class="form-label visually-hidden">Price/Pack</label>' +
+            '<input type="number" name="prizePrice" class="form-control" placeholder="Price" step="any" required>' +
+          '</div>' +
+          '<div class="col-3 col-md-3">' +
+            '<label class="form-label visually-hidden">Total Qty</label>' +
+            '<input type="number" name="prizeTotalQty" class="form-control" placeholder="Total qty" min="0" step="1" value="0" required>' +
+          '</div>';
+        document.getElementById('prizeEntries').appendChild(div);
+      }
+
+      function removeLastPrizeEntry() {
+        const entries = document.getElementById('prizeEntries');
+        if (entries.children.length > 1) entries.removeChild(entries.lastElementChild);
+      }
+
+      
+
+      // Submit handler
+      document.getElementById('prizeForm').onsubmit = async function (e) {
+        e.preventDefault();
+
+        // Collect event packs
+        const eventNames = Array.from(document.querySelectorAll('input[name="eventPackName"]')).map(i => i.value);
+        const eventPrices = Array.from(document.querySelectorAll('input[name="eventPrice"]')).map(i => i.value);
+        const eventQtys = Array.from(document.querySelectorAll('input[name="eventQtyPerPlayer"]')).map(i => i.value);
+
+        const eventPacks = eventNames.map((name, idx) => ({
+          name,
+          price: eventPrices[idx],
+          qtyPerPlayer: parseInt(eventQtys[idx], 10) || 0
+        }));
+
+        // Collect prize packs
+        const prizeNames = Array.from(document.querySelectorAll('input[name="prizePackName"]')).map(i => i.value);
+        const prizePrices = Array.from(document.querySelectorAll('input[name="prizePrice"]')).map(i => i.value);
+        const prizeQtys = Array.from(document.querySelectorAll('input[name="prizeTotalQty"]')).map(i => i.value);
+
+        const prizePacks = prizeNames.map((name, idx) => ({
+          name,
+          price: prizePrices[idx],
+          totalQty: parseInt(prizeQtys[idx], 10) || 0
+        }));
+
+        // Config values
+        const config = {
+          storeProfitRate: parseFloat(document.getElementById('storeProfitRate').value) / 100,
+          toPayoutRate: parseFloat(document.getElementById('toPayoutRate').value) / 100,
+          storeCostFactor: parseFloat(document.getElementById('storeCostFactor').value) / 100,
+          salesTaxRate: parseFloat(document.getElementById('salesTaxRate').value) / 100
+        };
+
+        const formData = new FormData(this);
+
+        const data = {
+          numPlayers: parseInt(formData.get('numPlayers')),
+          entryFee: parseFloat(formData.get('entryFee')),
+          withTO: false,
+          config,
+          eventPacks,
+          prizePacks,
+          additionalCosts: parseFloat(formData.get('additionalCosts')) || 0,
+          // include prizePacks as 'packs' for backward compatibility
+          packs: prizePacks,
+          mode: 'to-payout'
+        };
+
+        try {
+          const response = await fetch('/process', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data),
+          });
+
+          const result = await response.json();
+
+          // Render structured result and prepare receipt
+          let out = '<div class="alert alert-success">';
+          if (result.totals && typeof result.totals.prizePool === 'number') {
+            out += `<div><strong>Remaining prize pool:</strong> $${result.totals.prizePool.toFixed(2)}</div>`;
+          }
+          if (result.totals && Array.isArray(result.totals.allocatablePacks) && result.totals.allocatablePacks.length > 0) {
+            out += '<div class="mt-2"><small class="text-muted">Packs purchasable (whole packs):</small>';
+            out += '<table class="table table-sm table-striped mt-2"><thead><tr><th>Pack</th><th>Purchasable</th></tr></thead><tbody>';
+            result.totals.allocatablePacks.forEach(p => {
+              out += `<tr><td>${escapeHtml(p.name)}</td><td>${p.purchasable}</td></tr>`;
+            });
+            out += '</tbody></table></div>';
+          }
+          if (result.result) {
+            out += `<details class="mt-2"><summary>Detailed summary</summary><pre style="white-space:pre-wrap;">${escapeHtml(result.result)}</pre></details>`;
+          }
+          out += '</div>';
+          document.getElementById('result').innerHTML = out;
+
+          // Prepare receipt text and toggle print button
+          window.__lastReceiptText = buildReceiptText(result);
+          const prBtn = document.getElementById('printReceiptBtn');
+          if (window.__lastReceiptText && prBtn) {
+            prBtn.style.display = 'inline-block';
+          } else if (prBtn) {
+            prBtn.style.display = 'none';
+          }
+        } catch (error) {
+          document.getElementById('result').innerHTML = `<div class="alert alert-danger">Error: ${escapeHtml(error.message)}</div>`;
+        }
+      };
+
+      // Print button handler
+      document.getElementById('printReceiptBtn').addEventListener('click', function () {
+        const text = window.__lastReceiptText || '';
+        const w = window.open('', 'receipt', 'width=320,height=600');
+        if (!w) return alert('Popup blocked — allow popups for this site to print receipts.');
+        const html = `<!doctype html><html><head><title>Receipt</title><meta charset="utf-8"><style>body{font-family:monospace;white-space:pre-wrap;padding:8px} .receipt{width:280px;}</style></head><body><div class="receipt"><pre>${escapeHtml(text)}</pre></div><script>window.onload=function(){window.print();setTimeout(()=>window.close(),200);}</script></body></html>`;
+        w.document.open();
+        w.document.write(html);
+        w.document.close();
+      });
+    </script>
+    <script src="/additional-costs.js"></script>
+  </body>
+</html>
+

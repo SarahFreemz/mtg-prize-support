@@ -104,8 +104,16 @@ app.post('/process', (req, res) => {
       }, 0);
     }
 
-    // Prize pool after subtracting storeProfit, toPayout, event & prize pack costs and additional costs
-    let prizePool = totalEntryFeeMinusTax - storeProfit - toPayout - eventPackCost - prizePackCost - addCosts;
+    // Decide whether to subtract existing prize pack costs before calculating remaining prize pool.
+    // For 'prize' mode we do NOT subtract prize pack costs because the purpose is to show
+    // how many packs the remaining pool can buy; users may not know quantities ahead of time.
+    const prizePackCostSubtracted = selectedMode === 'prize' ? 0 : prizePackCost;
+
+    // Prize pool after subtracting storeProfit, toPayout, event pack costs, (optionally) prize pack costs, and additional costs
+    let prizePool = totalEntryFeeMinusTax - storeProfit - toPayout - eventPackCost - prizePackCostSubtracted - addCosts;
+
+  // Prepare variable to hold per-pack allocatable counts (filled below if applicable)
+  let allocByType = null;
 
     // Build results
     const results = [];
@@ -116,23 +124,9 @@ app.post('/process', (req, res) => {
     results.push(`Store profit (${(settings.storeProfitRate * 100).toFixed(2)}%): $${storeProfit.toFixed(2)}`);
     if (withTO) results.push(`TO payout (${(settings.toPayoutRate * 100).toFixed(2)}%): $${toPayout.toFixed(2)}`);
     results.push(`Event packs total store cost: $${eventPackCost.toFixed(2)}`);
-    results.push(`Prize packs total store cost: $${prizePackCost.toFixed(2)}`);
+    results.push(`Prize packs total store cost (if accounting existing quantities): $${prizePackCost.toFixed(2)}`);
     results.push(`Additional costs: $${addCosts.toFixed(2)}`);
     results.push(`Remaining prize pool: $${prizePool.toFixed(2)}`);
-
-    // If prize packs were provided with totalQty, list them with cost and quantity
-    if (prizeList.length > 0) {
-      results.push('');
-      results.push('Prize packs breakdown:');
-      prizeList.forEach((p, i) => {
-        const name = p.name || `Pack ${i+1}`;
-        const price = parseFloat(p.price) || 0;
-        const totalQty = parseInt(p.totalQty || p.qty || 0, 10) || 0;
-        const storeCost = price * settings.storeCostFactor;
-        const totalCost = (storeCost * totalQty);
-        results.push(`${name}: qty ${totalQty}, store cost per pack $${storeCost.toFixed(2)}, total $${totalCost.toFixed(2)}`);
-      });
-    }
 
     // If prizePool is negative, warn user
     if (prizePool < 0) {
@@ -142,14 +136,13 @@ app.post('/process', (req, res) => {
 
     // Additionally: compute for each prize pack how many more packs could be purchased with the remaining prizePool (if positive)
     if (prizePool > 0 && prizeList.length > 0) {
-      results.push('');
-      results.push('With remaining prize pool you could additionally purchase:');
-      prizeList.forEach((p, i) => {
+      // Compute structured allocatable counts but do not append per-pack lines to the human-readable result.
+      allocByType = prizeList.map((p, i) => {
         const name = p.name || `Pack ${i+1}`;
         const price = parseFloat(p.price) || 0;
         const storeCost = price * settings.storeCostFactor;
-        const additionalUnits = Math.floor(prizePool / storeCost);
-        results.push(`${name}: ${additionalUnits} additional pack(s)`);
+        const purchasable = storeCost > 0 ? Math.floor(prizePool / storeCost) : 0;
+        return { name, purchasable };
       });
     }
 
@@ -165,7 +158,8 @@ app.post('/process', (req, res) => {
         eventPackCost,
         prizePackCost,
         additionalCosts: addCosts,
-        prizePool
+        prizePool,
+        allocatablePacks: allocByType
       },
       result: results.join('\n')
     });

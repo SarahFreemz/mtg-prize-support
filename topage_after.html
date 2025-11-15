@@ -1,4 +1,4 @@
-<!doctype html>
+﻿<!doctype html>
 <html lang="en">
   <head>
     <meta charset="utf-8" />
@@ -17,7 +17,31 @@
             .replace(/'/g, '&#39;');
         }
 
-        // Print/receipt functionality removed from this page
+        // Build a plain-text receipt from the server response
+        function buildReceiptText(result) {
+          if (!result || !result.totals) return '';
+          const lines = [];
+          lines.push('MTG Prize Support');
+          lines.push('------------------------------');
+          lines.push(`Mode: ${result.mode || ''}`);
+          if (typeof result.totals.totalEntryFee === 'number') lines.push(`Total revenue: $${result.totals.totalEntryFee.toFixed(2)}`);
+          if (typeof result.totals.totalEntryFeeMinusTax === 'number') lines.push(`Revenue after tax: $${result.totals.totalEntryFeeMinusTax.toFixed(2)}`);
+          if (typeof result.totals.storeProfit === 'number') lines.push(`Store profit: $${result.totals.storeProfit.toFixed(2)}`);
+          if (typeof result.totals.toPayout === 'number' && result.totals.toPayout > 0) lines.push(`TO payout: $${result.totals.toPayout.toFixed(2)}`);
+          if (typeof result.totals.additionalCosts === 'number') lines.push(`Additional costs: $${result.totals.additionalCosts.toFixed(2)}`);
+          lines.push('');
+          if (typeof result.totals.prizePool === 'number') lines.push(`Remaining prize pool: $${result.totals.prizePool.toFixed(2)}`);
+          lines.push('');
+          if (Array.isArray(result.totals.allocatablePacks) && result.totals.allocatablePacks.length > 0) {
+            lines.push('Packs purchasable:');
+            result.totals.allocatablePacks.forEach(p => {
+              lines.push(`${p.name}  x ${p.purchasable}`);
+            });
+          }
+          lines.push('');
+          lines.push('Thank you');
+          return lines.join('\n');
+        }
 
         // Event pack functions
         function addEventEntry() {
@@ -168,52 +192,22 @@
           };
         }
 
-        // Utility: build plain-text receipt (optimized for narrow receipt printers)
-        function buildReceiptText(result) {
-          if (!result || !result.totals) return '';
-          const lines = [];
-          lines.push('MTG Prize Support');
-          lines.push('------------------------------');
-          lines.push('Mode: ' + (result.mode || ''));
-          if (typeof result.totals.totalEntryFee === 'number') lines.push('Total revenue: $' + result.totals.totalEntryFee.toFixed(2));
-          if (typeof result.totals.totalEntryFeeMinusTax === 'number') lines.push('Revenue after tax: $' + result.totals.totalEntryFeeMinusTax.toFixed(2));
-          if (typeof result.totals.storeProfit === 'number') lines.push('Store profit: $' + result.totals.storeProfit.toFixed(2));
-          if (typeof result.totals.toPayout === 'number' && result.totals.toPayout > 0) lines.push('TO payout: $' + result.totals.toPayout.toFixed(2));
-          if (typeof result.totals.additionalCosts === 'number') lines.push('Additional costs: $' + result.totals.additionalCosts.toFixed(2));
-          lines.push('');
-          if (typeof result.totals.prizePool === 'number') lines.push('Remaining prize pool: $' + result.totals.prizePool.toFixed(2));
-          lines.push('');
-          if (Array.isArray(result.totals.allocatablePacks) && result.totals.allocatablePacks.length > 0) {
-            lines.push('Packs purchasable:');
-            result.totals.allocatablePacks.forEach(p => {
-              lines.push(p.name + '  x ' + p.purchasable);
-            });
-          }
-          lines.push('');
-          lines.push('Thank you');
-          return lines.join('\n');
-        }
-
         // Print button handler
-        (function attachPrintHandler(){
-          const prBtn = document.getElementById('printReceiptBtn');
-          if (!prBtn) return;
+        const prBtn = document.getElementById('printReceiptBtn');
+        if (prBtn) {
           prBtn.addEventListener('click', function () {
             const text = window.__lastReceiptText || '';
             const w = window.open('', 'receipt', 'width=320,height=600');
             if (!w) return alert('Popup blocked — allow popups for this site to print receipts.');
-            const html = '<!doctype html><html><head><meta charset="utf-8"><title>Receipt</title>' +
-              '<style>body{font-family:monospace;font-size:12px;white-space:pre-wrap;padding:8px;margin:0} .receipt{width:280px;}</style>' +
-              '</head><body><div class="receipt"><pre>' + escapeHtml(text) + '</pre></div>' +
-              '<script>window.onload=function(){window.print();setTimeout(function(){window.close();},200);};</' + 'script>' +
-              '</body></html>';
+            const html = `<!doctype html><html><head><title>Receipt</title><meta charset="utf-8"><style>body{font-family:monospace;white-space:pre-wrap;padding:8px} .receipt{width:280px;}</style></head><body><div class="receipt"><pre>${escapeHtml(text)}</pre></div><script>window.onload=function(){window.print();setTimeout(()=>window.close(),200);}</script></body></html>`;
             w.document.open();
             w.document.write(html);
             w.document.close();
           });
-        })();
+        }
       });
     </script>
     <script src="/additional-costs.js"></script>
   </body>
 </html>
+
