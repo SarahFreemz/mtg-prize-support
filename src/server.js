@@ -141,19 +141,103 @@ app.post('/process', (req, res) => {
     }
 
     // Additionally: compute for each prize pack how many more packs could be purchased with the remaining prizePool (if positive)
-    if (prizePool > 0 && prizeList.length > 0) {
-      results.push('');
-      results.push('With remaining prize pool you could additionally purchase:');
-      prizeList.forEach((p, i) => {
+    let allocatablePacks = [];
+    if (prizeList.length > 0) {
+      allocatablePacks = prizeList.map((p, i) => {
         const name = p.name || `Pack ${i+1}`;
         const price = parseFloat(p.price) || 0;
-        const storeCost = price * settings.storeCostFactor;
-        const additionalUnits = Math.floor(prizePool / storeCost);
-        results.push(`${name}: ${additionalUnits} additional pack(s)`);
+        const storeCostPerPack = price * settings.storeCostFactor;
+        const purchasable = (storeCostPerPack > 0 && prizePool > 0) ? Math.floor(prizePool / storeCostPerPack) : 0;
+        return { name, price, storeCostPerPack, purchasable };
       });
     }
 
-    // Return the settings and result summary
+    // Structure event packs with computed units and store cost per pack for client consumption
+    const eventPacksStructured = Array.isArray(eventPacks) && eventPacks.length > 0 ? eventPacks.map((ep, i) => {
+      const price = parseFloat(ep.price) || 0;
+      const qtyPerPlayer = parseInt(ep.qtyPerPlayer || 0, 10) || 0;
+      const units = qtyPerPlayer * players;
+      const storeCostPerPack = price * settings.storeCostFactor;
+      return { name: ep.name || `EventPack ${i+1}`, price, qtyPerPlayer, units, storeCostPerPack };
+    }) : [];
+
+    // Structured prize list with store cost per pack
+    const prizeListStructured = prizeList.map((p, i) => {
+      const price = parseFloat(p.price) || 0;
+      const totalQty = parseInt(p.totalQty || p.qty || 0, 10) || 0;
+      const storeCostPerPack = price * settings.storeCostFactor;
+      return { name: p.name || `Pack ${i+1}`, price, totalQty, storeCostPerPack };
+    });
+
+    // Build per-mode HTML human summaries so each client/page can prefer its own structure.
+    function buildSummaryForMode(mode) {
+      const parts = [];
+      parts.push('<div><strong>MTG Prize Support</strong></div>');
+
+      if (mode === 'entry-fee') {
+        // Entry-fee focused summary: emphasize revenue and tax
+        parts.push('<div>Total revenue (before tax): $' + totalEntryFee.toFixed(2) + '</div>');
+        parts.push('<div>Revenue after tax: $' + totalEntryFeeMinusTax.toFixed(2) + '</div>');
+        parts.push('<div>Store profit: $' + storeProfit.toFixed(2) + '</div>');
+        parts.push('<div style="margin-top:6px;">Per-player entry fee: $' + (fee.toFixed ? fee.toFixed(2) : parseFloat(fee).toFixed(2)) + '</div>');
+        if (withTO && typeof toPayout === 'number' && toPayout > 0) {
+          parts.push('<div style="margin-top:8px;padding:6px;border:1px solid #000;background:#f8f9fa;">');
+          parts.push('<strong>TO payout:</strong> $' + toPayout.toFixed(2) + '</div>');
+        }
+        return parts.join('');
+      }
+
+      if (mode === 'to-payout') {
+        // TO payout focused summary: make the TO payout very prominent, de-emphasize remaining prize pool
+        if (withTO && typeof toPayout === 'number' && toPayout > 0) {
+          parts.push('<div style="margin-top:8px;padding:8px;border:2px solid #000;background:#fff3cd;">');
+          parts.push('<div style="font-weight:700;font-size:1.05em;">TO payout: $' + toPayout.toFixed(2) + '</div>');
+          parts.push('</div>');
+        } else {
+          parts.push('<div style="margin-top:8px;"><em>No TO payout configured.</em></div>');
+        }
+        // remaining prize pool shown plainly (no strong)
+        parts.push('<div style="margin-top:6px;">Remaining prize pool: $' + prizePool.toFixed(2) + '</div>');
+        // small allocatable packs list if any
+        if (allocatablePacks.length > 0) {
+          parts.push('<div style="margin-top:6px;"><small>Packs available (whole packs):</small></div>');
+          parts.push('<ul>');
+          allocatablePacks.forEach(p => parts.push('<li>' + (p.name || 'pack') + ': ' + p.purchasable + '</li>'));
+          parts.push('</ul>');
+        }
+        return parts.join('');
+      }
+
+      // Default: 'prize' mode summary (prize distribution focused)
+      parts.push('<div>Total revenue (before tax): $' + totalEntryFee.toFixed(2) + '</div>');
+      parts.push('<div>Revenue after tax: $' + totalEntryFeeMinusTax.toFixed(2) + '</div>');
+      parts.push('<div>Store profit: $' + storeProfit.toFixed(2) + '</div>');
+      if (withTO && typeof toPayout === 'number' && toPayout > 0) {
+        parts.push('<div style="margin-top:8px;padding:6px;border:1px solid #000;background:#f8f9fa;">');
+        parts.push('<strong>TO payout:</strong> $' + toPayout.toFixed(2));
+        parts.push('</div>');
+      }
+      // emphasize remaining prize pool for prize mode
+      parts.push('<div style="margin-top:6px;"><strong>Remaining prize pool:</strong> $' + prizePool.toFixed(2) + '</div>');
+      if (allocatablePacks.length > 0) {
+        parts.push('<div style="margin-top:6px;"><strong>Packs available (whole packs):</strong></div>');
+        parts.push('<ul>');
+        allocatablePacks.forEach(p => parts.push('<li>' + (p.name || 'pack') + ': ' + p.purchasable + '</li>'));
+        parts.push('</ul>');
+      }
+      return parts.join('');
+    }
+
+    const humanSummaryHtmlByMode = {
+      prize: buildSummaryForMode('prize'),
+      'to-payout': buildSummaryForMode('to-payout'),
+      'entry-fee': buildSummaryForMode('entry-fee')
+    };
+
+    // Backwards-compatible single summary equals the selected mode's summary
+    const humanSummaryHtml = humanSummaryHtmlByMode[selectedMode] || humanSummaryHtmlByMode.prize;
+
+    // Return the settings and result summary (keep backward compat fields too)
     res.json({
       mode: selectedMode,
       settings,
@@ -165,9 +249,18 @@ app.post('/process', (req, res) => {
         eventPackCost,
         prizePackCost,
         additionalCosts: addCosts,
-        prizePool
+        prizePool,
+        allocatablePacks // [{name, price, storeCostPerPack, purchasable}]
       },
-      result: results.join('\n')
+      // backward-compatible plain text result
+      result: results.join('\n'),
+      // structured fields for richer clients
+      resultLines: results,
+      humanSummary: results.join('\n'),
+      humanSummaryHtmlByMode,
+      humanSummaryHtml,
+      prizeList: prizeListStructured,
+      eventPacks: eventPacksStructured
     });
 
   } catch (err) {

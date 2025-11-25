@@ -73,15 +73,15 @@
           <div class="event-entry-row row mb-2 g-1 align-items-center">
             <div class="col-5 col-md-5">
               <label class="form-label visually-hidden">Pack Name</label>
-              <input type="text" name="eventPackName" class="form-control" placeholder="Name" required />
+              <input type="text" name="eventPackName" class="form-control" placeholder="Name" />
             </div>
             <div class="col-4 col-md-4">
               <label class="form-label visually-hidden">Price/Pack</label>
-              <input type="number" name="eventPrice" class="form-control" placeholder="Price" step="any" required />
+              <input type="number" name="eventPrice" class="form-control" placeholder="Price" step="any" />
             </div>
             <div class="col-3 col-md-3">
-              <label class="form-label visually-hidden">Qty/Player</label> 
-              <input type="number" name="eventQtyPerPlayer" class="form-control" placeholder="Qty/player" min="0" step="1" value="0" required />
+              <label class="form-label visually-hidden">Qty/Player</label>
+              <input type="number" name="eventQtyPerPlayer" class="form-control" placeholder="Qty/player" min="0" step="1" value="0" />
             </div>
           </div>
         </div>
@@ -99,15 +99,15 @@
           <div class="prize-entry-row row mb-2 g-1 align-items-center">
             <div class="col-6 col-md-6">
               <label class="form-label visually-hidden">Pack Name</label>
-              <input type="text" name="prizePackName" class="form-control" placeholder="Name" required />
+              <input type="text" name="prizePackName" class="form-control" placeholder="Name" />
             </div>
             <div class="col-3 col-md-3">
               <label class="form-label visually-hidden">Price/Pack</label>
-              <input type="number" name="prizePrice" class="form-control" placeholder="Price" step="any" required />
+              <input type="number" name="prizePrice" class="form-control" placeholder="Price" step="any" />
             </div>
             <div class="col-3 col-md-3">
               <label class="form-label visually-hidden">Total Qty</label>
-              <input type="number" name="prizeTotalQty" class="form-control" placeholder="Total qty" min="0" step="1" value="0" required />
+              <input type="number" name="prizeTotalQty" class="form-control" placeholder="Total qty" min="0" step="1" value="0" />
             </div>
           </div>
         </div>
@@ -128,9 +128,12 @@
           </div>
         </div>
 
-        <button type="submit" class="btn btn-primary w-100">Calculate Prize Distribution</button>
+        <button type="submit" class="btn btn-primary w-100">Calculate TO Payout</button>
       </form>
 
+      <div class="d-flex justify-content-end mt-2">
+        <button id="printReceiptBtn" type="button" class="btn btn-outline-secondary btn-sm d-none">Print Receipt</button>
+      </div>
       <div id="result" class="mt-4"></div>
     </div>
 
@@ -143,15 +146,15 @@
         div.innerHTML =
           '<div class="col-5 col-md-5">' +
             '<label class="form-label visually-hidden">Pack Name</label>' +
-            '<input type="text" name="eventPackName" class="form-control" placeholder="Name" required>' +
+            '<input type="text" name="eventPackName" class="form-control" placeholder="Name">' +
           '</div>' +
           '<div class="col-4 col-md-4">' +
             '<label class="form-label visually-hidden">Price/Pack</label>' +
-            '<input type="number" name="eventPrice" class="form-control" placeholder="Price" step="any" required>' +
+            '<input type="number" name="eventPrice" class="form-control" placeholder="Price" step="any">' +
           '</div>' +
           '<div class="col-3 col-md-3">' +
             '<label class="form-label visually-hidden">Qty/Player</label>' +
-            '<input type="number" name="eventQtyPerPlayer" class="form-control" placeholder="Qty/player" min="0" step="1" value="0" required>' +
+            '<input type="number" name="eventQtyPerPlayer" class="form-control" placeholder="Qty/player" min="0" step="1" value="0">' +
           '</div>';
         document.getElementById('eventEntries').appendChild(div);
       }
@@ -168,15 +171,15 @@
         div.innerHTML =
           '<div class="col-6 col-md-6">' +
             '<label class="form-label visually-hidden">Pack Name</label>' +
-            '<input type="text" name="prizePackName" class="form-control" placeholder="Name" required>' +
+            '<input type="text" name="prizePackName" class="form-control" placeholder="Name">' +
           '</div>' +
           '<div class="col-3 col-md-3">' +
             '<label class="form-label visually-hidden">Price/Pack</label>' +
-            '<input type="number" name="prizePrice" class="form-control" placeholder="Price" step="any" required>' +
+            '<input type="number" name="prizePrice" class="form-control" placeholder="Price" step="any">' +
           '</div>' +
           '<div class="col-3 col-md-3">' +
             '<label class="form-label visually-hidden">Total Qty</label>' +
-            '<input type="number" name="prizeTotalQty" class="form-control" placeholder="Total qty" min="0" step="1" value="0" required>' +
+            '<input type="number" name="prizeTotalQty" class="form-control" placeholder="Total qty" min="0" step="1" value="0">' +
           '</div>';
         document.getElementById('prizeEntries').appendChild(div);
       }
@@ -184,6 +187,16 @@
       function removeLastPrizeEntry() {
         const entries = document.getElementById('prizeEntries');
         if (entries.children.length > 1) entries.removeChild(entries.lastElementChild);
+      }
+
+      // Utility to escape HTML when injecting server strings into the page
+      function escapeHtml(str) {
+        return String(str || '')
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;')
+          .replace(/"/g, '&quot;')
+          .replace(/'/g, '&#39;');
       }
 
       // Submit handler
@@ -199,7 +212,7 @@
           name,
           price: eventPrices[idx],
           qtyPerPlayer: parseInt(eventQtys[idx], 10) || 0
-        }));
+        })).filter(p => p.name || parseFloat(p.price) > 0 || p.qtyPerPlayer > 0);
 
         // Collect prize packs
         const prizeNames = Array.from(document.querySelectorAll('input[name="prizePackName"]')).map(i => i.value);
@@ -210,7 +223,7 @@
           name,
           price: prizePrices[idx],
           totalQty: parseInt(prizeQtys[idx], 10) || 0
-        }));
+        })).filter(p => p.name || parseFloat(p.price) > 0 || p.totalQty > 0);
 
         // Config values
         const config = {
@@ -225,7 +238,8 @@
         const data = {
           numPlayers: parseInt(formData.get('numPlayers')),
           entryFee: parseFloat(formData.get('entryFee')),
-          withTO: false,
+          // request the server to calculate the TO payout for this mode
+          withTO: true,
           config,
           eventPacks,
           prizePacks,
@@ -243,11 +257,47 @@
           });
 
           const result = await response.json();
-          document.getElementById('result').innerHTML = `<div class="alert alert-success"><pre>${result.result}</pre></div>`;
+
+          // Prioritize showing the calculated TO payout at the top
+          var out = '<div class="alert alert-success">';
+          if (result.totals && typeof result.totals.toPayout === 'number') {
+            out += '<div><strong>Calculated TO payout:</strong> $' + result.totals.toPayout.toFixed(2) + '</div>';
+          }
+
+
+          // Note: packs-available table removed from TO payout view (kept on Prize Support page)
+
+          // Fallback: include the server's human-readable summary in a collapsed pre block
+          if (result.result) {
+            out += '<details class="mt-2"><summary>Detailed summary</summary><pre style="white-space:pre-wrap;">' + escapeHtml(result.result) + '</pre></details>';
+          }
+
+          out += '</div>';
+          document.getElementById('result').innerHTML = out;
+          // store for shared printer
+          window.__lastServerResult = result;
+          if (window.ReceiptPrinter) {
+            try { window.__lastReceiptText = ReceiptPrinter.buildReceiptText(result); } catch (e) { }
+          }
+          // reveal print button now that we have a result
+          try { document.getElementById('printReceiptBtn').classList.remove('d-none'); } catch (e) {}
         } catch (error) {
           document.getElementById('result').innerHTML = `<div class="alert alert-danger">Error: ${error.message}</div>`;
         }
       };
+    </script>
+    <script src="receipt-print.js"></script>
+    <script>
+      document.addEventListener('DOMContentLoaded', function () {
+        if (window.ReceiptPrinter) {
+          ReceiptPrinter.attachPrintHandler('#printReceiptBtn', function () {
+            return window.__lastReceiptText || (window.__lastServerResult ? ReceiptPrinter.buildReceiptText(window.__lastServerResult) : '');
+          });
+          if (window.__lastServerResult && !window.__lastReceiptText) {
+            try { window.__lastReceiptText = ReceiptPrinter.buildReceiptText(window.__lastServerResult); } catch (e) {}
+          }
+        }
+      });
     </script>
   </body>
 </html>

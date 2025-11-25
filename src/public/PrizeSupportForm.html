@@ -11,15 +11,14 @@
     </head>
     <body class="container-fluid bg-light">
         <div class="container px-2 px-sm-4 py-4" style="max-width: 600px; margin-top: 40px;">
-            <h3 class="mb-3 text-center">Prize Support Calculator</h3>
-            <div class="text-center mb-3">
-  <a href="/" class="btn btn-sm btn-outline-secondary">
-    &larr; Home
-  </a>
+                        <div class="d-flex align-items-center mb-3">
+    <a href="/" class="btn btn-sm btn-outline-secondary me-3">&larr; Home</a>
+    <h3 class="mb-0 flex-grow-1 text-center">Prize Support Calculator</h3>
+    <div style="width:86px;"></div>
 </div>
             <p class="text-center text-muted">
                 Enter the names and prices of the prize packs available. The total number
-                of packs available for prizing will be calculated automatically.
+                of packs available for prizing will be calculated automatically based on event revenue.
             </p>
             
             <!-- Configuration Section -->
@@ -128,6 +127,54 @@
                     </div>
                 </div>
                 
+                <!-- Additional Costs (optional, collapsed) -->
+                <div class="d-flex justify-content-between align-items-center mt-2 mb-2">
+                    <h5 class="small text-muted mb-0">Additional costs (optional)</h5>
+                    <button class="btn btn-link p-0 text-muted" type="button" data-bs-toggle="collapse" data-bs-target="#additionalCostsSection" aria-expanded="false" aria-controls="additionalCostsSection" style="font-size:14px;">Show</button>
+                </div>
+                <div class="collapse" id="additionalCostsSection">
+                    <div class="p-2 bg-white rounded border mb-3">
+                        <div class="row g-2 align-items-center">
+                            <div class="col-6 col-md-6">
+                                <label for="additionalCosts" class="form-label small text-muted mb-0">Additional costs (optional)</label>
+                                <input type="number" id="additionalCosts" name="additionalCosts" class="form-control form-control-sm mt-2 mt-sm-0" value="0" min="0" step="any" />
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Event Packs (per-player) - collapsed by default -->
+                <div class="d-flex justify-content-between align-items-center mt-3 mb-2">
+                    <h5 class="small text-muted mb-0">Event Packs (per-player, optional)</h5>
+                    <button class="btn btn-link p-0 text-muted" type="button" data-bs-toggle="collapse" data-bs-target="#eventPacksSection" aria-expanded="false" aria-controls="eventPacksSection" style="font-size:14px;">Show</button>
+                </div>
+
+                <div class="collapse" id="eventPacksSection">
+                    <div id="eventEntries">
+                        <div class="event-entry-row row mb-2 g-1 align-items-center">
+                            <div class="col-5 col-md-5">
+                                <label class="form-label visually-hidden">Pack Name</label>
+                                <input type="text" name="eventPackName" class="form-control" placeholder="Name" />
+                            </div>
+                            <div class="col-4 col-md-4">
+                                <label class="form-label visually-hidden">Price/Pack</label>
+                                <input type="number" name="eventPrice" class="form-control" placeholder="Price" step="any" />
+                            </div>
+                            <div class="col-3 col-md-3">
+                                <label class="form-label visually-hidden">Qty/Player</label>
+                                <input type="number" name="eventQtyPerPlayer" class="form-control" placeholder="Qty/player" min="0" step="1" value="0" />
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="d-flex gap-2 mb-3 mt-2">
+                        <button type="button" class="btn btn-outline-secondary btn-sm" onclick="addEventEntry()">Add Event Pack</button>
+                        <button type="button" class="btn btn-outline-danger btn-sm" onclick="removeLastEventEntry()">Remove Event Pack</button>
+                    </div>
+                </div>
+
+                <!-- Prize Packs (total quantity used) -->
+                <h5 class="small text-muted mt-3">Prize Packs Available</h5>
                 <div id="entries">
                     <div class="entry-row row mb-2 g-1 align-items-center">
                         <div class="col-6 col-md-6">
@@ -136,8 +183,7 @@
                                 type="text"
                                 name="packName"
                                 class="form-control"
-                                placeholder="Name"
-                                required />
+                                placeholder="Name" />
                         </div>
                         <div class="col-6 col-md-6">
                             <label for="price" class="form-label">Price/Pack</label>
@@ -146,12 +192,11 @@
                                 name="price"
                                 class="form-control"
                                 placeholder="Price"
-                                step="any"
-                                required />
+                                step="any" />
                         </div>
                     </div>
                 </div>
-                
+
                 <div class="d-flex gap-2 mb-3">
                     <button type="button" class="btn btn-outline-secondary btn-sm" onclick="addEntry()">
                         Add Another
@@ -160,16 +205,20 @@
                         Remove Last
                     </button>
                 </div>
-                
+
                 <button type="submit" class="btn btn-primary w-100">Calculate Prize Distribution</button>
             </form>
-            
+
+            <div class="d-flex justify-content-end mt-2">
+                <button id="printReceiptBtn" type="button" class="btn btn-outline-secondary btn-sm d-none">Print Receipt</button>
+            </div>
+
             <div id="result" class="mt-4"></div>
         </div>
         
         <!-- Bootstrap 5 JS Bundle -->
         <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-        <script>
+            <script>
             function addEntry() {
                 var div = document.createElement('div');
                 div.className = 'entry-row row g-1 mb-2 align-items-center';
@@ -177,11 +226,11 @@
                 div.innerHTML =
                     '<div class="col-6 col-md-6">' +
                         '<label class="form-label visually-hidden">Pack Name</label>' +
-                        '<input type="text" name="packName" class="form-control" placeholder="Name" required>' +
+                        '<input type="text" name="packName" class="form-control" placeholder="Name">' +
                     '</div>' +
                     '<div class="col-6 col-md-6">' +
                         '<label class="form-label visually-hidden">Price/Pack</label>' +
-                        '<input type="number" name="price" class="form-control" placeholder="Price" step="any" required>' +
+                        '<input type="number" name="price" class="form-control" placeholder="Price" step="any">' +
                     '</div>';
 
                 document.getElementById('entries').appendChild(div);
@@ -194,10 +243,58 @@
                 }
             }
 
+            // Event pack functions (per-player)
+            function addEventEntry() {
+                var div = document.createElement('div');
+                div.className = 'event-entry-row row mb-2 g-1 align-items-center';
+                div.innerHTML =
+                    '<div class="col-5 col-md-5">' +
+                        '<label class="form-label visually-hidden">Pack Name</label>' +
+                        '<input type="text" name="eventPackName" class="form-control" placeholder="Name">' +
+                    '</div>' +
+                    '<div class="col-4 col-md-4">' +
+                        '<label class="form-label visually-hidden">Price/Pack</label>' +
+                        '<input type="number" name="eventPrice" class="form-control" placeholder="Price" step="any">' +
+                    '</div>' +
+                    '<div class="col-3 col-md-3">' +
+                        '<label class="form-label visually-hidden">Qty/Player</label>' +
+                        '<input type="number" name="eventQtyPerPlayer" class="form-control" placeholder="Qty/player" min="0" step="1" value="0">' +
+                    '</div>';
+                document.getElementById('eventEntries').appendChild(div);
+            }
+
+            function removeLastEventEntry() {
+                var entries = document.getElementById('eventEntries');
+                if (entries.children.length > 1) entries.removeChild(entries.lastElementChild);
+            }
+
+            // Utility to escape HTML when injecting server strings into the page
+            function escapeHtml(str) {
+                return String(str || '')
+                    .replace(/&/g, '&amp;')
+                    .replace(/</g, '&lt;')
+                    .replace(/>/g, '&gt;')
+                    .replace(/"/g, '&quot;')
+                    .replace(/'/g, '&#39;');
+            }
+
             document.getElementById('prizeForm').onsubmit = async function (e) {
                 e.preventDefault();
                 
                 const formData = new FormData(this);
+
+                // Collect event packs (per-player)
+                const eventNames = Array.from(document.querySelectorAll('input[name="eventPackName"]')).map(i => i.value);
+                const eventPrices = Array.from(document.querySelectorAll('input[name="eventPrice"]')).map(i => i.value);
+                const eventQtys = Array.from(document.querySelectorAll('input[name="eventQtyPerPlayer"]')).map(i => i.value);
+
+                const eventPacks = eventNames.map((name, idx) => ({
+                    name,
+                    price: eventPrices[idx],
+                    qtyPerPlayer: parseInt(eventQtys[idx], 10) || 0
+                })).filter(p => p.name || parseFloat(p.price) > 0 || p.qtyPerPlayer > 0);
+
+                // Collect prize pack entries
                 const packNames = [];
                 const prices = [];
                 
@@ -216,8 +313,10 @@
                     numPlayers: parseInt(formData.get('numPlayers')),
                     entryFee: parseFloat(formData.get('entryFee')),
                     withTO: formData.get('withTO') === 'on',
+                    additionalCosts: parseFloat(formData.get('additionalCosts')) || 0,
                     config: config,
-                    packs: packNames.map((name, i) => ({ name, price: prices[i] })),
+                    eventPacks: eventPacks,
+                    packs: packNames.map((name, i) => ({ name, price: prices[i] })).filter(p => p.name || parseFloat(p.price) > 0),
                     mode: 'prize' // set per page: 'prize' | 'to-payout' | 'entry-fee'
                 };
 
@@ -229,11 +328,157 @@
                     });
                     
                     const result = await response.json();
-                    document.getElementById('result').innerHTML = `<div class="alert alert-success"><pre>${result.result}</pre></div>`;
+                    // store the raw result for the shared printer to use
+                    window.__lastServerResult = result;
+                    if (window.ReceiptPrinter) {
+                        try { window.__lastReceiptText = ReceiptPrinter.buildReceiptText(result); } catch (e) { /* ignore */ }
+                    }
+                    // show print button now that we have a result
+                    try { document.getElementById('printReceiptBtn').classList.remove('d-none'); } catch (e) {}
+
+                    // Build a structured results box similar to the TO Payout page.
+                    // Prominent information: breakdown of total prize packs purchasable for each entered pack
+                    try {
+                        var out = '<div class="alert alert-success">';
+
+                        // If the server returned a TO payout (user checked With TO), make it prominent
+                        if (result.totals && typeof result.totals.toPayout === 'number' && result.totals.toPayout > 0) {
+                            out += '<div class="mb-2">';
+                            out += '<div class="fw-bold">Calculated TO payout:</div>';
+                            out += '<div class="fs-5">$' + result.totals.toPayout.toFixed(2) + '</div>';
+                            out += '</div>';
+                        }
+
+                        // Remaining prize pool (from server)
+                        if (result.totals && typeof result.totals.prizePool === 'number') {
+                            out += '<div><strong>Remaining prize pool:</strong> $' + result.totals.prizePool.toFixed(2) + '</div>';
+                        }
+
+                        // Compute allocatable packs. Prefer server-provided allocatablePacks (structured) if available,
+                        // otherwise fall back to client-side calculation using the entered prizeList.
+                        var prizePool = result.totals && typeof result.totals.prizePool === 'number' ? result.totals.prizePool : 0;
+                        var storeCostFactor = (result.settings && typeof result.settings.storeCostFactor === 'number') ? result.settings.storeCostFactor : (config.storeCostFactor || 0.6);
+
+                        // Reconstruct the entered packs from the form values we captured earlier
+                        var prizeList = packNames.map(function(name, i) {
+                            return { name: name || ('Pack ' + (i+1)), price: parseFloat(prices[i]) || 0 };
+                        }).filter(function(p) { return p.name || p.price > 0; });
+
+                        // Use server-calculated allocatable packs if present
+                        if (result.totals && Array.isArray(result.totals.allocatablePacks) && result.totals.allocatablePacks.length > 0) {
+                            var serverPacks = result.totals.allocatablePacks;
+                            var totalAvailable = serverPacks.reduce(function(s, it) { return s + (parseInt(it.purchasable || 0, 10) || 0); }, 0);
+                            out += '<div class="mt-2"><small class="text-muted">Packs available from the remaining prize pool:</small>';
+                            out += '<div class="mb-1"><strong>Total packs available:</strong> ' + totalAvailable + '</div>';
+                            out += '<table class="table table-sm table-striped mt-2"><thead><tr><th>Pack</th><th>Store cost per pack</th><th>Available</th></tr></thead><tbody>';
+                            serverPacks.forEach(function(p) {
+                                var storeCost = parseFloat(p.storeCostPerPack) || (parseFloat(p.price || 0) * storeCostFactor);
+                                var purchasable = parseInt(p.purchasable || 0, 10) || 0;
+                                out += '<tr>' +
+                                    '<td>' + escapeHtml(p.name || '') + '</td>' +
+                                    '<td>$' + (isFinite(storeCost) ? storeCost.toFixed(2) : '0.00') + '</td>' +
+                                    '<td>' + purchasable + '</td>' +
+                                    '</tr>';
+                            });
+                            out += '</tbody></table></div>';
+
+                        } else if (prizeList.length > 0) {
+                            out += '<div class="mt-2"><small class="text-muted">Packs available from the remaining prize pool:</small>';
+                            out += '<table class="table table-sm table-striped mt-2"><thead><tr><th>Pack</th><th>Store cost per pack</th><th>Available</th></tr></thead><tbody>';
+                            prizeList.forEach(function(p) {
+                                var storeCost = p.price * storeCostFactor;
+                                var purchasable = 0;
+                                if (storeCost > 0 && prizePool > 0) purchasable = Math.floor(prizePool / storeCost);
+                                out += '<tr>' +
+                                    '<td>' + escapeHtml(p.name) + '</td>' +
+                                    '<td>$' + (isFinite(storeCost) ? storeCost.toFixed(2) : '0.00') + '</td>' +
+                                    '<td>' + purchasable + '</td>' +
+                                    '</tr>';
+                            });
+                            out += '</tbody></table></div>';
+                        }
+
+                        // Detailed summary: build a human-readable block that follows the same logic
+                        // (use numeric totals and the entered packs; do not assume pre-entered total quantities)
+                        try {
+                            var detailLines = [];
+                            detailLines.push('Mode: ' + (result.mode || 'prize'));
+                            if (result.totals && typeof result.totals.totalEntryFee === 'number') detailLines.push('Total revenue (before tax): $' + result.totals.totalEntryFee.toFixed(2));
+                            if (result.totals && typeof result.totals.totalEntryFeeMinusTax === 'number') detailLines.push('Revenue after tax: $' + result.totals.totalEntryFeeMinusTax.toFixed(2));
+                            if (result.totals && typeof result.totals.storeProfit === 'number') detailLines.push('Store profit: $' + result.totals.storeProfit.toFixed(2));
+                            if (result.totals && typeof result.totals.toPayout === 'number' && result.totals.toPayout > 0) detailLines.push('TO payout: $' + result.totals.toPayout.toFixed(2));
+
+                            // Event packs breakdown (per-player)
+                            if (Array.isArray(eventPacks) && eventPacks.length) {
+                                detailLines.push('');
+                                detailLines.push('Event packs (per-player):');
+                                eventPacks.forEach(function(ep, i) {
+                                    var price = parseFloat(ep.price) || 0;
+                                    var qtyPerPlayer = parseInt(ep.qtyPerPlayer || 0, 10) || 0;
+                                    var units = qtyPerPlayer * (parseInt(formData.get('numPlayers')) || 0);
+                                    var storeCost = price * storeCostFactor;
+                                    detailLines.push('- ' + (ep.name || ('EventPack ' + (i+1))) + ': price $' + price.toFixed(2) + ', qty/player ' + qtyPerPlayer + ', units ' + units + ', store cost per pack $' + storeCost.toFixed(2));
+                                });
+                            }
+
+                            // Prize packs entered and store cost per pack
+                            if (prizeList.length > 0) {
+                                detailLines.push('');
+                                detailLines.push('Prize packs (entered):');
+                                prizeList.forEach(function(p, i) {
+                                    var price = parseFloat(p.price) || 0;
+                                    var storeCost = price * storeCostFactor;
+                                    detailLines.push('- ' + (p.name || ('Pack ' + (i+1))) + ': price $' + price.toFixed(2) + ', store cost per pack $' + storeCost.toFixed(2));
+                                });
+                            }
+
+                            // Remaining prize pool and purchasable suggestion
+                            detailLines.push('');
+                            if (typeof prizePool === 'number') {
+                                detailLines.push('Remaining prize pool: $' + prizePool.toFixed(2));
+                                if (prizeList.length > 0 && prizePool > 0) {
+                                    detailLines.push('With the remaining prize pool you can distribute (whole packs):');
+                                    prizeList.forEach(function(p) {
+                                        var price = parseFloat(p.price) || 0;
+                                        var storeCost = price * storeCostFactor;
+                                        var additionalUnits = (storeCost > 0) ? Math.floor(prizePool / storeCost) : 0;
+                                        detailLines.push('- ' + (p.name || 'pack') + ': ' + additionalUnits + ' additional pack(s)');
+                                    });
+                                }
+                                if (prizePool < 0) {
+                                    detailLines.push('Warning: remaining prize pool is negative. Revenue does not cover the configured costs/allocations.');
+                                }
+                            }
+
+                            out += '<details class="mt-2"><summary>Detailed summary</summary><pre style="white-space:pre-wrap;">' + escapeHtml(detailLines.join('\n')) + '</pre></details>';
+                        } catch (dErr) {
+                            // fallback to server text if anything unexpected happens
+                            if (result.result) out += '<details class="mt-2"><summary>Detailed summary</summary><pre style="white-space:pre-wrap;">' + escapeHtml(result.result) + '</pre></details>';
+                        }
+
+                        out += '</div>';
+                        document.getElementById('result').innerHTML = out;
+                    } catch (renderErr) {
+                        // if anything goes wrong, fall back to raw summary
+                        document.getElementById('result').innerHTML = `<div class="alert alert-success"><pre>${result.result}</pre></div>`;
+                    }
                 } catch (error) {
                     document.getElementById('result').innerHTML = `<div class="alert alert-danger">Error: ${error.message}</div>`;
                 }
             };
+        </script>
+        <script src="receipt-print.js"></script>
+        <script>
+            document.addEventListener('DOMContentLoaded', function () {
+                if (window.ReceiptPrinter) {
+                    ReceiptPrinter.attachPrintHandler('#printReceiptBtn', function () {
+                        return window.__lastReceiptText || (window.__lastServerResult ? ReceiptPrinter.buildReceiptText(window.__lastServerResult) : '');
+                    });
+                    if (window.__lastServerResult && !window.__lastReceiptText) {
+                        try { window.__lastReceiptText = ReceiptPrinter.buildReceiptText(window.__lastServerResult); } catch (e) {}
+                    }
+                }
+            });
         </script>
     </body>
 </html>
