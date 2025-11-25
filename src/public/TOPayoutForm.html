@@ -66,67 +66,7 @@
             <input type="number" id="entryFee" name="entryFee" class="form-control" min="0" step="any" required />
           </div>
         </div>
-
-        <!-- Event Packs section -->
-        <h5 class="small text-muted">Event Packs (per-player)</h5>
-        <div id="eventEntries">
-          <div class="event-entry-row row mb-2 g-1 align-items-center">
-            <div class="col-5 col-md-5">
-              <label class="form-label visually-hidden">Pack Name</label>
-              <input type="text" name="eventPackName" class="form-control" placeholder="Name" />
-            </div>
-            <div class="col-4 col-md-4">
-              <label class="form-label visually-hidden">Price/Pack</label>
-              <input type="number" name="eventPrice" class="form-control" placeholder="Price" step="any" />
-            </div>
-            <div class="col-3 col-md-3">
-              <label class="form-label visually-hidden">Qty/Player</label>
-              <input type="number" name="eventQtyPerPlayer" class="form-control" placeholder="Qty/player" min="0" step="1" value="0" />
-            </div>
-          </div>
-        </div>
-
-        <div class="d-flex gap-2 mb-3">
-          <button type="button" class="btn btn-outline-secondary btn-sm" onclick="addEventEntry()">Add Event Pack</button>
-          <button type="button" class="btn btn-outline-danger btn-sm" onclick="removeLastEventEntry()">Remove Event Pack</button>
-        </div>
-
-        <hr />
-
-        <!-- Prize Packs section -->
-        <h5 class="small text-muted">Prize Packs (total quantity used)</h5>
-        <div id="prizeEntries">
-          <div class="prize-entry-row row mb-2 g-1 align-items-center">
-            <div class="col-6 col-md-6">
-              <label class="form-label visually-hidden">Pack Name</label>
-              <input type="text" name="prizePackName" class="form-control" placeholder="Name" />
-            </div>
-            <div class="col-3 col-md-3">
-              <label class="form-label visually-hidden">Price/Pack</label>
-              <input type="number" name="prizePrice" class="form-control" placeholder="Price" step="any" />
-            </div>
-            <div class="col-3 col-md-3">
-              <label class="form-label visually-hidden">Total Qty</label>
-              <input type="number" name="prizeTotalQty" class="form-control" placeholder="Total qty" min="0" step="1" value="0" />
-            </div>
-          </div>
-        </div>
-
-        <div class="d-flex gap-2 mb-3">
-          <button type="button" class="btn btn-outline-secondary btn-sm" onclick="addPrizeEntry()">Add Prize Pack</button>
-          <button type="button" class="btn btn-outline-danger btn-sm" onclick="removeLastPrizeEntry()">Remove Prize Pack</button>
-        </div>
-
-        <!-- Moved and de-emphasized Additional costs (narrow input, responsive) -->
-        <div class="row mb-3">
-          <div class="col-12 d-flex flex-column flex-sm-row align-items-start align-items-sm-center justify-content-between">
-            <div>
-              <label for="additionalCosts" class="form-label small text-muted mb-0">Additional costs (optional)</label>
-              <div class="form-text small text-muted">Other event expenses to deduct from revenue (paid event kit, judge, etc.)</div>
-            </div>
-            <input type="number" id="additionalCosts" name="additionalCosts" class="form-control form-control-sm mt-2 mt-sm-0" value="0" min="0" step="any" style="max-width:140px;" />
-          </div>
-        </div>
+        
 
         <button type="submit" class="btn btn-primary w-100">Calculate TO Payout</button>
       </form>
@@ -139,56 +79,6 @@
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
-      // Event pack functions
-      function addEventEntry() {
-        const div = document.createElement('div');
-        div.className = 'event-entry-row row mb-2 g-1 align-items-center';
-        div.innerHTML =
-          '<div class="col-5 col-md-5">' +
-            '<label class="form-label visually-hidden">Pack Name</label>' +
-            '<input type="text" name="eventPackName" class="form-control" placeholder="Name">' +
-          '</div>' +
-          '<div class="col-4 col-md-4">' +
-            '<label class="form-label visually-hidden">Price/Pack</label>' +
-            '<input type="number" name="eventPrice" class="form-control" placeholder="Price" step="any">' +
-          '</div>' +
-          '<div class="col-3 col-md-3">' +
-            '<label class="form-label visually-hidden">Qty/Player</label>' +
-            '<input type="number" name="eventQtyPerPlayer" class="form-control" placeholder="Qty/player" min="0" step="1" value="0">' +
-          '</div>';
-        document.getElementById('eventEntries').appendChild(div);
-      }
-
-      function removeLastEventEntry() {
-        const entries = document.getElementById('eventEntries');
-        if (entries.children.length > 1) entries.removeChild(entries.lastElementChild);
-      }
-
-      // Prize pack functions
-      function addPrizeEntry() {
-        const div = document.createElement('div');
-        div.className = 'prize-entry-row row mb-2 g-1 align-items-center';
-        div.innerHTML =
-          '<div class="col-6 col-md-6">' +
-            '<label class="form-label visually-hidden">Pack Name</label>' +
-            '<input type="text" name="prizePackName" class="form-control" placeholder="Name">' +
-          '</div>' +
-          '<div class="col-3 col-md-3">' +
-            '<label class="form-label visually-hidden">Price/Pack</label>' +
-            '<input type="number" name="prizePrice" class="form-control" placeholder="Price" step="any">' +
-          '</div>' +
-          '<div class="col-3 col-md-3">' +
-            '<label class="form-label visually-hidden">Total Qty</label>' +
-            '<input type="number" name="prizeTotalQty" class="form-control" placeholder="Total qty" min="0" step="1" value="0">' +
-          '</div>';
-        document.getElementById('prizeEntries').appendChild(div);
-      }
-
-      function removeLastPrizeEntry() {
-        const entries = document.getElementById('prizeEntries');
-        if (entries.children.length > 1) entries.removeChild(entries.lastElementChild);
-      }
-
       // Utility to escape HTML when injecting server strings into the page
       function escapeHtml(str) {
         return String(str || '')
@@ -203,27 +93,9 @@
       document.getElementById('prizeForm').onsubmit = async function (e) {
         e.preventDefault();
 
-        // Collect event packs
-        const eventNames = Array.from(document.querySelectorAll('input[name="eventPackName"]')).map(i => i.value);
-        const eventPrices = Array.from(document.querySelectorAll('input[name="eventPrice"]')).map(i => i.value);
-        const eventQtys = Array.from(document.querySelectorAll('input[name="eventQtyPerPlayer"]')).map(i => i.value);
-
-        const eventPacks = eventNames.map((name, idx) => ({
-          name,
-          price: eventPrices[idx],
-          qtyPerPlayer: parseInt(eventQtys[idx], 10) || 0
-        })).filter(p => p.name || parseFloat(p.price) > 0 || p.qtyPerPlayer > 0);
-
-        // Collect prize packs
-        const prizeNames = Array.from(document.querySelectorAll('input[name="prizePackName"]')).map(i => i.value);
-        const prizePrices = Array.from(document.querySelectorAll('input[name="prizePrice"]')).map(i => i.value);
-        const prizeQtys = Array.from(document.querySelectorAll('input[name="prizeTotalQty"]')).map(i => i.value);
-
-        const prizePacks = prizeNames.map((name, idx) => ({
-          name,
-          price: prizePrices[idx],
-          totalQty: parseInt(prizeQtys[idx], 10) || 0
-        })).filter(p => p.name || parseFloat(p.price) > 0 || p.totalQty > 0);
+        // This page does not collect pack details — send empty arrays so the server calculates TO payout only.
+        const eventPacks = [];
+        const prizePacks = [];
 
         // Config values
         const config = {
@@ -266,11 +138,6 @@
 
 
           // Note: packs-available table removed from TO payout view (kept on Prize Support page)
-
-          // Fallback: include the server's human-readable summary in a collapsed pre block
-          if (result.result) {
-            out += '<details class="mt-2"><summary>Detailed summary</summary><pre style="white-space:pre-wrap;">' + escapeHtml(result.result) + '</pre></details>';
-          }
 
           out += '</div>';
           document.getElementById('result').innerHTML = out;
