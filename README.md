@@ -20,6 +20,26 @@ This application helps tournament organizers calculate how many prize packs can 
 - **Multiple Pack Types**: Support for different pack types with varying prices
 - **Responsive Design**: Works on desktop and mobile devices using Bootstrap 5
 - **Real-time Results**: Instant calculations as you input data
+- **Signup/Waitlist Support**: Allows players to express interest for upcoming events
+
+## Signup / Waitlist Function
+
+The signup/waitlist flow lets players register interest in future events before all details are finalized.
+
+### Purpose
+
+- Capture potential player attendance ahead of scheduling
+- Build a contact list for upcoming event announcements
+- Help organizers estimate demand and plan inventory/prize support
+
+### Typical organizer flow
+
+1. Players submit their signup/waitlist information.
+2. Waitlist entries are reviewed by organizers.
+3. Organizers use waitlist size to guide event planning.
+4. Players are notified when event details are finalized.
+
+> This section can be expanded later with implementation details (data model, storage, and notification integrations) as the feature evolves.
 
 ## Project Structure
 
@@ -139,6 +159,18 @@ Processes tournament data and returns prize calculations.
   "result": "Prize Distribution\nTO Payout: $22.64\nThunder Junction: 19 pack(s)"
 }
 ```
+
+## Next Steps
+
+Planned future improvements:
+
+- Persist waitlist data in a database (SQLite/PostgreSQL)
+- Add email/SMS notifications for signup and event announcements
+- Add organizer/admin view for waitlist management
+- Support multiple event templates and payout presets
+- Add authentication and role-based access control
+- Add test coverage (unit/integration/end-to-end)
+- Improve observability with structured logging and metrics
 
 ## Technologies Used
 
