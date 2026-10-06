@@ -41,6 +41,24 @@ The signup/waitlist flow lets players register interest in future events before 
 
 > This section can be expanded later with implementation details (data model, storage, and notification integrations) as the feature evolves.
 
+## Screenshots
+
+The app includes a few key screens that are useful to showcase in documentation and demos:
+
+- Main prize support calculator form
+- Calculation results with prize breakdown and summary
+- TO payout calculator screen
+
+To add screenshots to this section, save the images in a `docs/screenshots/` folder and reference them here, for example:
+
+```md
+![Prize Support Calculator](docs/screenshots/prize-support-form.png)
+![Prize Results](docs/screenshots/prize-results.png)
+![TO Payout Calculator](docs/screenshots/to-payout-calculator.png)
+```
+
+This keeps the README visually informative while making it easy to update as the app evolves.
+
 ## Project Structure
 
 - **src/server.js**: Express server and main calculation logic
