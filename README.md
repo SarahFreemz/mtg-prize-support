@@ -43,21 +43,21 @@ The signup/waitlist flow lets players register interest in future events before 
 
 ## Screenshots
 
-### Main Calculator
-![Prize Support Calculator form](docs/screenshots/prize-support-form.png)
-*Main input screen for player count, entry fee, TO toggle, and prize pack setup.*
+<a href="docs/screenshots/prize-support-form.png">
+  <img src="docs/screenshots/prize-support-form.png" alt="Prize Support Calculator form" width="420" />
+</a>
 
-### Configuration Settings
-![Configuration settings panel](docs/screenshots/configuration-settings.png)
-*Adjustable settings for store profit, TO payout, store cost factor, and sales tax.*
+<a href="docs/screenshots/configuration-settings.png">
+  <img src="docs/screenshots/configuration-settings.png" alt="Configuration settings panel" width="420" />
+</a>
 
-### Prize Distribution Results
-![Prize distribution results](docs/screenshots/prize-results.png)
-*Calculated TO payout, remaining prize pool, available packs, and detailed summary output.*
+<a href="docs/screenshots/prize-results.png">
+  <img src="docs/screenshots/prize-results.png" alt="Prize distribution results" width="420" />
+</a>
 
-### TO Payout Calculator
-![TO payout calculator](docs/screenshots/to-payout-calculator.png)
-*Dedicated payout mode with quick TO payout calculation and printable receipt support.*
+<a href="docs/screenshots/to-payout-calculator.png">
+  <img src="docs/screenshots/to-payout-calculator.png" alt="TO payout calculator" width="420" />
+</a>
 
 ## Project Structure
 
