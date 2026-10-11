@@ -43,21 +43,21 @@ The signup/waitlist flow lets players register interest in future events before 
 
 ## Screenshots
 
-The app includes a few key screens that are useful to showcase in documentation and demos:
+### Main Calculator
+![Prize Support Calculator form](docs/screenshots/prize-support-form.png)
+*Main input screen for player count, entry fee, TO toggle, and prize pack setup.*
 
-- Main prize support calculator form
-- Calculation results with prize breakdown and summary
-- TO payout calculator screen
+### Configuration Settings
+![Configuration settings panel](docs/screenshots/configuration-settings.png)
+*Adjustable settings for store profit, TO payout, store cost factor, and sales tax.*
 
-To add screenshots to this section, save the images in a `docs/screenshots/` folder and reference them here, for example:
+### Prize Distribution Results
+![Prize distribution results](docs/screenshots/prize-results.png)
+*Calculated TO payout, remaining prize pool, available packs, and detailed summary output.*
 
-```md
-![Prize Support Calculator](docs/screenshots/prize-support-form.png)
-![Prize Results](docs/screenshots/prize-results.png)
-![TO Payout Calculator](docs/screenshots/to-payout-calculator.png)
-```
-
-This keeps the README visually informative while making it easy to update as the app evolves.
+### TO Payout Calculator
+![TO payout calculator](docs/screenshots/to-payout-calculator.png)
+*Dedicated payout mode with quick TO payout calculation and printable receipt support.*
 
 ## Project Structure
 
