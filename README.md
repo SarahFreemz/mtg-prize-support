@@ -22,9 +22,13 @@ This application helps tournament organizers calculate how many prize packs can 
 - **Real-time Results**: Instant calculations as you input data
 - **Signup/Waitlist Support**: Allows players to express interest for upcoming events
 
+## TO Payout Calculator
+
+For events where the prize support function is not needed, a simple calculator is included with inputs for entry fee amount and number of players to determine payout for the Tournament Organizer.
+
 ## Signup / Waitlist Function
 
-The signup/waitlist flow lets players register interest in future events before all details are finalized.
+The signup/waitlist flow lets players register interest in future events before all details are finalized. Organizers can cap the event at a certain number of players, and any additional registrations will be added to a waitlist. As players pay for their entry fees, employees can mark off which players have paid, cancelled, or no-showed, and open slots will automatically be filled from the waitlist in order of signup. Alternatively, employees/organizers can manually push individuals to the top of the list as needed.
 
 ### Purpose
 
@@ -37,9 +41,8 @@ The signup/waitlist flow lets players register interest in future events before 
 1. Players submit their signup/waitlist information.
 2. Waitlist entries are reviewed by organizers.
 3. Organizers use waitlist size to guide event planning.
-4. Players are notified when event details are finalized.
 
-> This section can be expanded later with implementation details (data model, storage, and notification integrations) as the feature evolves.
+> This section will be expanded later with implementation details (data model, storage, and notification integrations) as the feature evolves.
 
 ## Screenshots
 
