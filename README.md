@@ -70,45 +70,6 @@ The signup/waitlist flow lets players register interest in future events before 
 - **Dockerfile**: Container configuration for deployment
 - **README.md**: Project documentation
 
-## Setup Instructions
-
-### Prerequisites
-- Node.js (v14 or higher)
-- npm
-
-### Local Development
-
-1. **Clone the repository**:
-   ```bash
-   git clone <repository-url>
-   cd mtg-prize-support-app
-   ```
-
-2. **Install dependencies**:
-   ```bash
-   npm install
-   ```
-
-3. **Start the development server**:
-   ```bash
-   npm start
-   ```
-
-4. **Access the application**:
-   Open your browser to `http://localhost:8080`
-
-### Docker Deployment
-
-1. **Build the Docker image**:
-   ```bash
-   docker build -t mtg-prize-support-app .
-   ```
-
-2. **Run the container**:
-   ```bash
-   docker run -p 8080:8080 mtg-prize-support-app
-   ```
-
 ## How It Works
 
 ### Calculation Flow
